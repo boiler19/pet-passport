@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Pet Passport</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
 <style>
@@ -22,14 +22,20 @@ body{font-family:-apple-system,'Helvetica Neue',Arial,'Hiragino Sans',sans-serif
 .chip-av img{width:100%;height:100%;object-fit:cover}
 .chip-name{font-size:13px;font-weight:600}
 
-/* Tabs */
-.tabs{background:var(--sf);border-bottom:1px solid var(--bd);display:flex;overflow-x:auto;scrollbar-width:none;position:sticky;top:52px;z-index:190}
-.tabs::-webkit-scrollbar{display:none}
-.tab{flex-shrink:0;padding:12px 15px;font-size:13px;font-weight:500;color:var(--t3);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;transition:color .15s,border-color .15s}
-.tab.on{color:var(--t1);border-bottom-color:var(--t1)}
+/* Tabs (bottom nav) */
+:root{--nav:#111}
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:300;background:var(--nav);padding-bottom:env(safe-area-inset-bottom);box-shadow:0 -2px 12px rgba(0,0,0,.08)}
+.tabs-in{position:relative;max-width:480px;margin:0 auto;height:64px;display:flex}
+.tab{flex:1;min-width:0;position:relative;z-index:2;background:none;border:none;padding:0;cursor:pointer;font-family:inherit;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:10px;font-weight:700;white-space:nowrap;-webkit-tap-highlight-color:transparent;transition:transform .35s cubic-bezier(.4,1.3,.5,1),color .25s}
+.tab svg{width:22px;height:22px;flex-shrink:0}
+.tab.on{color:var(--nav);transform:translateY(-10px);font-size:8.5px;letter-spacing:-.4px}
+.tab.on svg{width:20px;height:20px}
+.tab-ind{position:absolute;top:0;left:0;width:20%;height:100%;z-index:1;pointer-events:none;transform:translateX(calc(var(--i,0) * 100%));transition:transform .35s cubic-bezier(.4,1.3,.5,1)}
+.tab-ind::before{content:'';position:absolute;left:50%;top:-16px;width:72px;height:72px;margin-left:-36px;border-radius:50%;background:var(--nav)}
+.tab-ind::after{content:'';position:absolute;left:50%;top:-11px;width:62px;height:62px;margin-left:-31px;border-radius:50%;background:#fff;box-shadow:0 3px 10px rgba(0,0,0,.2)}
 
 /* Panes */
-.pane{display:none;max-width:480px;margin:0 auto;padding:16px}
+.pane{display:none;max-width:480px;margin:0 auto;padding:16px 16px calc(100px + env(safe-area-inset-bottom))}
 .pane.on{display:block}
 
 /* Card */
@@ -219,10 +225,143 @@ select.finput{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xml
 .modal-apply{width:100%;padding:14px;background:var(--t1);color:#fff;border:none;border-radius:var(--r);font-size:14px;font-weight:700;cursor:pointer;margin-top:14px}
 
 /* Toast */
-#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--t1);color:#fff;padding:10px 20px;border-radius:100px;font-size:13px;font-weight:500;opacity:0;pointer-events:none;transition:opacity .22s,transform .22s;z-index:999;white-space:nowrap}
+#toast{position:fixed;bottom:calc(150px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%) translateY(10px);background:var(--t1);color:#fff;padding:10px 20px;border-radius:100px;font-size:13px;font-weight:500;opacity:0;pointer-events:none;transition:opacity .22s,transform .22s;z-index:999;white-space:nowrap}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .fnote{text-align:center;font-size:11px;color:var(--t3);padding:5px 0 28px}
 .empty-note{text-align:center;font-size:13px;color:var(--t3);padding:30px 0}
+
+/* ── Feed (timeline) ── */
+.seg{display:flex;background:var(--ab);border-radius:100px;padding:3px;gap:2px;margin-bottom:10px}
+.seg button{flex:1;padding:8px 0;border:none;background:none;border-radius:100px;font-size:13px;font-weight:600;color:var(--t3);cursor:pointer;font-family:inherit}
+.seg button.on{background:var(--sf);color:var(--t1);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.search{position:relative;margin-bottom:14px}
+.search .finput{padding-left:34px}
+.search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--t3);pointer-events:none}
+.tl2-day{position:relative;padding:0 0 22px 30px}
+.tl2-day::before{content:'';position:absolute;left:7px;top:8px;bottom:-8px;width:2px;background:var(--bd)}
+.tl2-day:last-child::before{display:none}
+.tl2-dot{position:absolute;left:1px;top:2px;width:14px;height:14px;border-radius:50%;background:var(--sf);border:2.5px solid var(--t1);z-index:1}
+.tl2-dot.visit{border-color:var(--blue);background:var(--blue)}
+.tl2-dot.today{box-shadow:0 0 0 4px rgba(17,17,17,.12)}
+.tl2-date{font-size:14px;font-weight:800;letter-spacing:-.2px;line-height:18px;margin-bottom:8px;display:flex;align-items:baseline;gap:6px}
+.tl2-date small{font-size:11px;font-weight:600;color:var(--t3)}
+.tl2-date .rel{font-size:10px;font-weight:700;color:#fff;background:var(--t1);padding:2px 7px;border-radius:100px}
+.tl2-day .dcard,.tl2-day .vcard{margin-bottom:6px}
+.tl2-day .dcard{border:none;background:none;padding:2px 0;align-items:flex-start}
+.tl2-day .dcard-ph{width:56px;height:56px}
+.tl2-day .dmemo{white-space:normal;font-size:13px;color:var(--t1);line-height:1.55}
+.tl2-day .vcard{border-left-width:3px;padding:11px 12px}
+.tl2-day .vcard-vet{font-size:14.5px;margin-bottom:3px}
+.tl2-day .vcard-notes{font-size:13px}
+.feed-empty{text-align:center;font-size:13px;color:var(--t3);padding:40px 0;line-height:1.7}
+mark{background:#fef08a;color:inherit;border-radius:2px;padding:0 1px}
+.dcard{display:flex;align-items:center;gap:10px;background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:8px 10px 8px 8px;margin-bottom:8px}
+.dcard-ph{width:52px;height:52px;border-radius:var(--rs);background:var(--ab);flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer}
+.dcard-ph img{width:100%;height:100%;object-fit:cover}
+.dcard-body{flex:1;min-width:0}
+.dicons{display:flex;gap:4px;flex-wrap:wrap}
+.dic{display:inline-flex;align-items:center;gap:2px;font-size:11.5px;font-weight:600;padding:3px 8px;border-radius:100px;background:var(--ab);color:var(--t2);white-space:nowrap}
+.dic.warn{background:#fff7ed;color:#9a3412}
+.dic.bad{background:#fef2f2;color:var(--er)}
+.dmemo{font-size:12px;color:var(--t2);margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dtime{font-size:10px;color:var(--t3);margin-top:3px}
+.vcard{background:var(--sf);border:1px solid var(--bd);border-left:4px solid var(--blue);border-radius:var(--r);padding:14px 14px 14px 13px;margin-bottom:8px}
+.vcard-tag{font-size:9.5px;font-weight:700;letter-spacing:1.4px;color:var(--blue);margin-bottom:4px}
+.vcard-vet{font-size:16px;font-weight:800;letter-spacing:-.3px;margin-bottom:6px}
+.vcard-notes{font-size:13.5px;line-height:1.65;color:var(--t1)}
+.vcard-meta{display:flex;gap:6px;margin-top:9px;flex-wrap:wrap}
+.vmeta{font-size:11px;font-weight:600;padding:3px 8px;border-radius:100px;background:var(--bluebg);color:var(--blue)}
+.fab{position:fixed;right:max(16px,calc(50% - 224px));bottom:calc(84px + env(safe-area-inset-bottom));z-index:290;height:52px;padding:0 20px;border-radius:100px;background:var(--t1);color:#fff;border:none;font-size:14px;font-weight:700;box-shadow:0 6px 18px rgba(0,0,0,.25);cursor:pointer;display:none;align-items:center;gap:6px;font-family:inherit}
+.fab.on{display:flex}
+.fab:active{transform:scale(.97)}
+#pane-timeline{padding-bottom:calc(160px + env(safe-area-inset-bottom))}
+
+/* ── Daily sheet ── */
+.qrow{margin-bottom:16px}
+.qlbl{font-size:12px;font-weight:700;color:var(--t2);margin-bottom:7px}
+.qopts{display:flex;gap:6px}
+.qopt{flex:1 1 0;min-width:0;padding:11px 2px;border:1.5px solid var(--bd);border-radius:var(--rs);background:var(--sf);font-size:12.5px;font-weight:600;color:var(--t2);cursor:pointer;font-family:inherit;white-space:nowrap}
+.qopt.on{border-color:var(--t1);background:var(--t1);color:#fff}
+.qopt.on.warn{border-color:#c2410c;background:#c2410c}
+.qopt.on.bad{border-color:var(--er);background:var(--er)}
+.ph-row{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.ph-box{width:72px;height:72px;border-radius:var(--rs);border:1.5px dashed var(--bd);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:22px;overflow:hidden;cursor:pointer;background:var(--bg);flex-shrink:0;color:var(--t3)}
+.ph-box small{font-size:10px;font-weight:600;margin-top:2px}
+.ph-box img{width:100%;height:100%;object-fit:cover}
+.ph-side{flex:1;display:flex;flex-direction:column;gap:6px}
+.modal-foot{padding:12px 16px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--bd);flex-shrink:0}
+.modal-foot .btn-save{margin-top:0}
+
+/* ── Pet avatar ── */
+.pal{display:flex;align-items:center;gap:14px;background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:14px 16px;margin-bottom:10px}
+.pal-av{width:84px;height:84px;flex-shrink:0;position:relative}
+.pal-face{width:100%;height:100%;border-radius:50%;overflow:hidden;background:var(--ab);display:flex;align-items:center;justify-content:center;font-size:44px;border:3px solid var(--sf);box-shadow:0 0 0 1.5px var(--bd);transform-origin:50% 92%;animation:palIdle 7s ease-in-out infinite}
+.pal-face img{width:100%;height:100%;object-fit:cover;animation:palBreath 3.6s ease-in-out infinite}
+.pal-name{font-size:20px;font-weight:800;letter-spacing:-.6px}
+.pal-sub{font-size:12px;color:var(--t3);margin-top:2px}
+.pal-st{display:inline-block;font-size:11px;font-weight:700;margin-top:8px;padding:4px 10px;border-radius:100px;background:var(--ab);color:var(--t2);cursor:pointer;border:none;font-family:inherit}
+.pal-st.done{background:#ecfdf3;color:var(--ot)}
+@keyframes palBreath{0%,100%{transform:scale(1)}50%{transform:scale(1.035)}}
+@keyframes palIdle{0%,30%{transform:rotate(0)}36%{transform:rotate(-5deg)}46%{transform:rotate(-5deg)}52%{transform:rotate(0)}
+  70%{transform:rotate(0)}71.5%{transform:rotate(2.5deg)}73%{transform:rotate(-1.5deg)}74.5%{transform:rotate(1deg)}76%,100%{transform:rotate(0)}}
+.pal-face.joy{animation:palJoy .9s cubic-bezier(.3,1.4,.5,1) 1}
+@keyframes palJoy{0%{transform:translateY(0) scale(1)}20%{transform:translateY(4px) scale(1.08,.9)}45%{transform:translateY(-22px) scale(.95,1.06) rotate(-6deg)}65%{transform:translateY(0) scale(1.06,.94) rotate(4deg)}82%{transform:translateY(-6px) rotate(-2deg)}100%{transform:translateY(0) scale(1) rotate(0)}}
+.heart{position:absolute;font-size:18px;pointer-events:none;animation:heartUp 1.3s ease-out forwards;opacity:0}
+@keyframes heartUp{0%{opacity:0;transform:translate(0,0) scale(.4)}15%{opacity:1;transform:translate(0,-10px) scale(1)}100%{opacity:0;transform:translate(var(--dx),-80px) scale(.9)}}
+#joyPop{position:fixed;left:50%;bottom:calc(200px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:800;pointer-events:none;display:none;flex-direction:column;align-items:center}
+#joyPop.on{display:flex}
+#joyPop .pal-av{width:96px;height:96px}
+#joyPop .pal-face{animation:palJoy .9s cubic-bezier(.3,1.4,.5,1) .15s 2;box-shadow:0 8px 24px rgba(0,0,0,.18)}
+#joyPop .joy-msg{margin-top:8px;background:var(--t1);color:#fff;font-size:12px;font-weight:700;padding:6px 12px;border-radius:100px;animation:joyIn .3s ease-out}
+@keyframes joyIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.pal-face,.pal-face img{animation:none!important}}
+
+/* ── Lab trend ── */
+.lchips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin-bottom:10px}
+.lchips::-webkit-scrollbar{display:none}
+.lchip{flex-shrink:0;padding:6px 11px;border:1px solid var(--bd);border-radius:100px;background:none;font-size:12px;font-weight:600;color:var(--t2);cursor:pointer;font-family:inherit}
+.lchip.on{background:var(--t1);border-color:var(--t1);color:#fff}
+.lchip.hi:not(.on){border-color:#fecaca;color:var(--er)}
+.lab-row-vals{font-size:11.5px;color:var(--t2);line-height:1.6}
+.lab-row-vals b.hi{color:var(--er)}
+.flist-item.tap{cursor:pointer}
+
+/* ── Share / print ── */
+.share-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.btn-sec{padding:12px 8px;background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);font-size:13px;font-weight:700;color:var(--t1);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;font-family:inherit}
+.btn-sec:active{background:var(--bg)}
+.qr-big{display:flex;flex-direction:column;align-items:center;text-align:center;padding:4px 0 8px}
+.qr-big canvas{border:1px solid var(--bd);border-radius:var(--rs);padding:6px;background:#fff;max-width:100%;height:auto!important}
+.qr-note{font-size:12px;line-height:1.7;color:var(--t2);margin-top:12px;text-align:left}
+.qr-warn{font-size:12px;line-height:1.6;color:var(--wt);background:var(--wb);border:1px solid var(--wbd);border-radius:var(--rs);padding:10px 12px;margin-top:12px;text-align:left}
+.shared-bar{background:var(--bluebg);color:var(--blue);border:1px solid #bfdbfe;border-radius:var(--r);padding:11px 13px;font-size:12px;line-height:1.6;margin-bottom:10px}
+body.shared .tabs,body.shared .chip,body.shared .fab{display:none!important}
+
+#printArea{display:none;color:#111;font-family:-apple-system,'Helvetica Neue',Arial,'Hiragino Sans',sans-serif;background:#fff}
+#printArea .pr-hd{display:flex;align-items:center;gap:14px;border-bottom:2px solid #111;padding-bottom:10px;margin-bottom:12px}
+#printArea .pr-tag{font-size:8px;font-weight:700;letter-spacing:2px;color:#777}
+#printArea .pr-name{font-size:26px;font-weight:800;letter-spacing:-1px;line-height:1.1}
+#printArea .pr-sub{font-size:11px;color:#444;margin-top:2px}
+#printArea .pr-id{font-size:9px;font-family:'Courier New',monospace;color:#888;margin-top:2px}
+#printArea .pr-photo{width:64px;height:64px;border-radius:50%;object-fit:cover;border:1px solid #ddd}
+#printArea .pr-qr{text-align:center;font-size:7.5px;color:#777;margin-left:auto}
+#printArea .pr-qr canvas{width:76px!important;height:76px!important;display:block}
+#printArea .pr-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 18px}
+#printArea .pr-sec{break-inside:avoid}
+#printArea .pr-h{font-size:9px;font-weight:700;letter-spacing:1.4px;color:#666;border-bottom:1px solid #ccc;padding-bottom:3px;margin-bottom:6px}
+#printArea table{width:100%;border-collapse:collapse;font-size:11px}
+#printArea td,#printArea th{padding:3px 4px;border-bottom:1px solid #eee;text-align:left;vertical-align:top}
+#printArea th{font-weight:600;color:#666;width:34%;white-space:nowrap}
+#printArea .pr-hi{color:#b91c1c;font-weight:800}
+#printArea .pr-li{font-size:11px;line-height:1.5;padding:2px 0;border-bottom:1px solid #eee}
+#printArea .pr-al{font-size:12px;font-weight:700;color:#991b1b}
+#printArea .pr-ft{margin-top:14px;padding-top:6px;border-top:1px solid #ccc;font-size:8.5px;color:#888;display:flex;justify-content:space-between}
+@media print{
+  @page{size:A4;margin:10mm}
+  html,body{background:#fff!important}
+  body>*:not(#printArea){display:none!important}
+  #printArea{display:block!important;position:static!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
 </style>
 </head>
 <body>
@@ -231,22 +370,44 @@ select.finput{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xml
   <div class="logo">pet<em>passport</em></div>
   <div class="chip" onclick="switchTab('profile')">
     <div class="chip-av" id="chipAv">🐩</div>
-    <span class="chip-name" id="chipName">ここあ</span>
+    <span class="chip-name" id="chipName"></span>
   </div>
 </header>
 
 <nav class="tabs">
-  <button class="tab on" data-tab="dashboard">ダッシュボード</button>
-  <button class="tab" data-tab="passport">パスポート</button>
-  <button class="tab" data-tab="profile">プロフィール編集</button>
-  <button class="tab" data-tab="docs">書類管理</button>
+  <div class="tabs-in" id="tabsIn">
+    <div class="tab-ind"></div>
+    <button class="tab on" data-tab="timeline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="6" r="1.6"/><circle cx="5" cy="12" r="1.6"/><circle cx="5" cy="18" r="1.6"/><path d="M10 6h10M10 12h10M10 18h7"/></svg><span>タイムライン</span></button>
+    <button class="tab" data-tab="dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>データ</span></button>
+    <button class="tab" data-tab="passport"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2.5" width="14" height="19" rx="2"/><circle cx="12" cy="10" r="3"/><path d="M9 17h6"/></svg><span>パスポート</span></button>
+    <button class="tab" data-tab="profile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg><span>プロフィール</span></button>
+    <button class="tab" data-tab="docs"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2.5H7a2 2 0 0 0-2 2v15a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7.5z"/><path d="M14 2.5v5h5M9 13h6M9 17h4"/></svg><span>書類</span></button>
+  </div>
 </nav>
 
+<!-- ── Timeline ── -->
+<div class="pane on" id="pane-timeline">
+  <div class="seg" id="feedSeg">
+    <button class="on" data-f="all">全部</button>
+    <button data-f="daily">日常</button>
+    <button data-f="visit">診察</button>
+  </div>
+  <div class="search">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+    <input class="finput" id="feedQ" type="search" placeholder="症状・病名・薬名で検索" autocomplete="off">
+  </div>
+  <div id="feed"></div>
+</div>
+<button class="fab" id="fab" onclick="openDaily()">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+  今日の記録
+</button>
+
 <!-- ── Dashboard ── -->
-<div class="pane on" id="pane-dashboard">
+<div class="pane" id="pane-dashboard">
+  <div id="palCard"></div>
   <div class="kpi-row" id="kpiRow"></div>
   <div id="dashAlert"></div>
-
   <!-- Weight chart + monthly log -->
   <div class="card">
     <div class="card-hdr">
@@ -267,13 +428,23 @@ select.finput{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xml
   </div>
 
   <div class="card">
+    <div class="card-hdr"><span class="clabel">検査値の推移</span></div>
+    <div class="lchips" id="labChips"></div>
+    <div class="chart-wrap"><canvas id="lChart"></canvas></div>
+    <div class="chart-cap" id="lCap"></div>
+  </div>
+
+  <div class="card">
     <div class="clabel mb">体温推移</div>
     <div class="chart-wrap"><canvas id="tChart"></canvas></div>
     <div class="chart-cap">°C · 正常範囲 37.5–39.2（点線）</div>
   </div>
 
   <div class="card">
-    <div class="clabel mb">健診履歴</div>
+    <div class="card-hdr">
+      <span class="clabel">健診履歴</span>
+      <button class="btn-sm" onclick="switchTab('timeline');setFeedFilter('visit')">すべて見る</button>
+    </div>
     <div class="tl" id="dashTl"></div>
   </div>
 </div>
@@ -284,7 +455,26 @@ select.finput{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xml
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
     この画面を病院に見せる
   </button>
+  <div class="share-row">
+    <button class="btn-sec" onclick="openQr()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3M21 14v.01M14 21h3M21 18v3"/></svg>
+      QRコードで共有
+    </button>
+    <button class="btn-sec" onclick="printPassport()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M6 14h12v7H6z"/></svg>
+      印刷／PDF
+    </button>
+  </div>
   <div id="passportBody"></div>
+</div>
+
+<!-- ── Shared (read-only) ── -->
+<div class="pane" id="pane-shared">
+  <div class="shared-bar" id="sharedBar"></div>
+  <div class="share-row" style="grid-template-columns:1fr">
+    <button class="btn-sec" onclick="printPassport(SHARED_SRC)">印刷／PDF</button>
+  </div>
+  <div id="sharedBody"></div>
 </div>
 
 <!-- ── Profile Edit ── -->
@@ -387,21 +577,26 @@ select.finput{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xml
         <div class="add-form-row"><button class="btn-ok" onclick="addMedication()">追加</button><button class="btn-cl" onclick="toggleForm('med-form')">キャンセル</button></div>
       </div>
     </div>
-    <!-- Labs -->
+    <!-- Labs (history) -->
     <div class="form-sec">
-      <div class="fs-ttl">最新の検査値</div>
-      <div class="frow"><div class="fgrp"><label class="flbl">検査日</label><input class="finput" id="f-labdt" type="date"></div></div>
-      <div class="frow">
-        <div class="fgrp"><label class="flbl">ALT (U/L)</label><input class="finput" id="f-alt" type="number"></div>
-        <div class="fgrp"><label class="flbl">BUN (mg/dL)</label><input class="finput" id="f-bun" type="number"></div>
-      </div>
-      <div class="frow">
-        <div class="fgrp"><label class="flbl">クレアチニン</label><input class="finput" id="f-cre" type="number" step="0.1"></div>
-        <div class="fgrp"><label class="flbl">WBC (×10³)</label><input class="finput" id="f-wbc" type="number" step="0.1"></div>
-      </div>
-      <div class="frow">
-        <div class="fgrp"><label class="flbl">Hgb (g/dL)</label><input class="finput" id="f-hgb" type="number" step="0.1"></div>
-        <div class="fgrp"><label class="flbl">PLT (×10³)</label><input class="finput" id="f-plt" type="number"></div>
+      <div class="fs-ttl">検査値の記録（検査日ごと）</div>
+      <div class="flist" id="lab-list"></div>
+      <button class="btn-add" onclick="openLabForm()">＋ 検査結果を追加</button>
+      <div class="add-form" id="lab-form">
+        <div class="frow"><div class="fgrp"><label class="flbl">検査日</label><input class="finput" id="f-labdt" type="date"></div></div>
+        <div class="frow">
+          <div class="fgrp"><label class="flbl">ALT (U/L)</label><input class="finput" id="f-alt" type="number" inputmode="decimal"></div>
+          <div class="fgrp"><label class="flbl">BUN (mg/dL)</label><input class="finput" id="f-bun" type="number" inputmode="decimal"></div>
+        </div>
+        <div class="frow">
+          <div class="fgrp"><label class="flbl">クレアチニン</label><input class="finput" id="f-cre" type="number" step="0.1" inputmode="decimal"></div>
+          <div class="fgrp"><label class="flbl">WBC (×10³)</label><input class="finput" id="f-wbc" type="number" step="0.1" inputmode="decimal"></div>
+        </div>
+        <div class="frow">
+          <div class="fgrp"><label class="flbl">Hgb (g/dL)</label><input class="finput" id="f-hgb" type="number" step="0.1" inputmode="decimal"></div>
+          <div class="fgrp"><label class="flbl">PLT (×10³)</label><input class="finput" id="f-plt" type="number" inputmode="decimal"></div>
+        </div>
+        <div class="add-form-row"><button class="btn-ok" onclick="addLabFromForm()">記録する</button><button class="btn-cl" onclick="toggleForm('lab-form')">キャンセル</button></div>
       </div>
     </div>
     <button class="btn-save" onclick="saveProfile()">保存する</button>
@@ -461,6 +656,48 @@ select.finput{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xml
 
 <div id="toast"></div>
 
+<!-- ── Daily record sheet ── -->
+<div class="modal" id="dailyModal">
+  <div class="modal-sheet">
+    <div class="modal-hdr">
+      <span class="modal-ttl">今日の記録</span>
+      <button class="modal-x" onclick="closeDaily()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="ph-row">
+        <label class="ph-box" id="dPhBox">📷<small>写真</small>
+          <input type="file" id="dPhoto" accept="image/*" style="display:none" onchange="pickDailyPhoto(this.files[0])">
+        </label>
+        <div class="ph-side">
+          <input class="finput" id="dDate" type="date" style="font-size:13px;padding:7px 10px">
+          <button id="dPhDel" onclick="clearDailyPhoto()" style="display:none;align-self:flex-start;font-size:12px;color:var(--er);background:none;border:none;cursor:pointer;padding:0">写真を外す</button>
+        </div>
+      </div>
+      <div class="qrow"><div class="qlbl">💩 うんち</div><div class="qopts" data-q="poop"></div></div>
+      <div class="qrow"><div class="qlbl">💧 おしっこ</div><div class="qopts" data-q="pee"></div></div>
+      <div class="qrow"><div class="qlbl">🍚 食欲</div><div class="qopts" data-q="appetite"></div></div>
+      <input class="finput" id="dMemo" type="text" maxlength="100" placeholder="ひとことメモ（任意）">
+    </div>
+    <div class="modal-foot"><button class="btn-save" onclick="saveDaily()">記録する</button></div>
+  </div>
+</div>
+
+<!-- ── QR share sheet ── -->
+<div class="modal" id="qrModal">
+  <div class="modal-sheet">
+    <div class="modal-hdr">
+      <span class="modal-ttl">QRコードで共有</span>
+      <button class="modal-x" onclick="closeQr()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="qr-big" id="qrBig"></div>
+    </div>
+  </div>
+</div>
+
+<div id="joyPop"></div>
+<div id="printArea"></div>
+
 <script>
 // ══════════════════════════════════════
 // Setup PDF.js (no external worker — works from file://)
@@ -469,13 +706,14 @@ if(typeof pdfjsLib!=='undefined'){
   pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
 }
 
+
 // ══════════════════════════════════════
 // Default data
 // ══════════════════════════════════════
 const DEFAULTS={
   pet:{name:'ここあ',breed:'トイプードル',color:'ブラック',sex:'female',dob:'2021-03-15',
        weight:3.1,bloodType:'DEA 1.1(+)',microchip:'392098100XXXXX',vet:'田中動物病院',
-       lastVisit:'2026-06-01',nextVisit:'2026-06-21',temp:38.6,avatar:null},
+       lastVisit:'2026-06-01',nextVisit:'2026-06-21',temp:38.6,avatar:null,avatarToon:null},
   allergies:[{type:'食物',name:'チキン'},{type:'薬物',name:'アモキシシリン'}],
   conditions:[
     {date:'2026-06',name:'肝酵素上昇（ALT 89 U/L）— ウルソ投与・定期モニタリング中',status:'active'},
@@ -491,11 +729,20 @@ const DEFAULTS={
     {date:'2026-03-01',vet:'田中動物病院',weight:3.4,temp:38.3,notes:'混合ワクチン接種（5種）。異常所見なし。'},
     {date:'2025-12-01',vet:'田中動物病院',weight:3.2,temp:38.5,notes:'年次健診・歯科チェック。歯石軽度沈着を指摘。'}
   ],
-  labs:{date:'2026-06-01',alt:89,bun:18,cre:0.8,wbc:8.2,hgb:14.1,plt:310},
+  labHistory:[
+    {date:'2025-12-01',alt:58,bun:16,cre:0.7,wbc:7.9,hgb:14.6,plt:298},
+    {date:'2026-03-01',alt:66,bun:17,cre:0.7,wbc:8.0,hgb:14.3,plt:305},
+    {date:'2026-06-01',alt:89,bun:18,cre:0.8,wbc:8.2,hgb:14.1,plt:310}
+  ],
   weightLog:[
     {month:'2025-12',weight:3.20},{month:'2026-01',weight:3.25},{month:'2026-02',weight:3.30},
     {month:'2026-03',weight:3.40},{month:'2026-04',weight:3.35},{month:'2026-05',weight:3.20},
     {month:'2026-06',weight:3.10}
+  ],
+  daily:[
+    {id:'d1',date:'2026-06-03',ts:1780473600000,photo:null,poop:'good',pee:'normal',appetite:'good',memo:'お散歩たくさん'},
+    {id:'d2',date:'2026-05-30',ts:1780128000000,photo:null,poop:'loose',pee:'normal',appetite:'less',memo:'少し元気なし'},
+    {id:'d3',date:'2026-05-28',ts:1779955200000,photo:null,poop:'normal',pee:'normal',appetite:'normal',memo:''}
   ],
   documents:[]
 };
@@ -503,13 +750,28 @@ const DEFAULTS={
 // ══════════════════════════════════════
 // Storage
 // ══════════════════════════════════════
+const LAB_KEYS=['alt','bun','cre','wbc','hgb','plt'];
+function normalize(d){
+  d.pet=d.pet||{};
+  ['allergies','conditions','medications','checkups','weightLog','documents','daily'].forEach(k=>{if(!Array.isArray(d[k]))d[k]=[];});
+  if(!Array.isArray(d.labHistory)){
+    // 旧バージョン（最新値1件のみ）からの移行
+    d.labHistory=[];
+    if(d.labs&&LAB_KEYS.some(k=>d.labs[k]!=null)){
+      const e={date:d.labs.date||todayStr()};LAB_KEYS.forEach(k=>e[k]=d.labs[k]??null);
+      d.labHistory.push(e);
+    }
+  }
+  delete d.labs;
+  return d;
+}
 function loadData(){
-  try{const s=localStorage.getItem('ppv4');return s?JSON.parse(s):JSON.parse(JSON.stringify(DEFAULTS));}
-  catch{return JSON.parse(JSON.stringify(DEFAULTS));}
+  try{const s=localStorage.getItem('ppv4');return normalize(s?JSON.parse(s):JSON.parse(JSON.stringify(DEFAULTS)));}
+  catch{return normalize(JSON.parse(JSON.stringify(DEFAULTS)));}
 }
 function saveData(){
-  try{localStorage.setItem('ppv4',JSON.stringify(D));}
-  catch(e){showToast('ストレージ容量が不足しています');}
+  try{localStorage.setItem('ppv4',JSON.stringify(D));return true;}
+  catch(e){showToast('ストレージ容量が不足しています。古い写真や書類を削除してください',4000);return false;}
 }
 let D=loadData();
 
@@ -521,21 +783,31 @@ function showToast(msg,dur=2800){
   el.textContent=msg;el.classList.add('show');
   clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),dur);
 }
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function fmtDate(d){
-  if(!d)return'—';const p=d.split('-');
+  if(!d)return'—';const p=String(d).split('-');
   if(p.length===3)return`${p[0]}年${+p[1]}月${+p[2]}日`;
   if(p.length===2)return`${p[0]}年${+p[1]}月`;
   return d;
 }
 function fmtMonth(m){if(!m)return'—';const[y,mo]=m.split('-');return`${y.slice(2)}/${+mo}`;}
-function calcAge(dob){
-  if(!dob)return'?';const b=new Date(dob),n=new Date();
-  let a=n.getFullYear()-b.getFullYear();
-  if(n.getMonth()-b.getMonth()<0||(n.getMonth()===b.getMonth()&&n.getDate()<b.getDate()))a--;
-  return a;
+function pad2(n){return String(n).padStart(2,'0');}
+function ymd(dt){return`${dt.getFullYear()}-${pad2(dt.getMonth()+1)}-${pad2(dt.getDate())}`;}
+function todayStr(){return ymd(new Date());}
+// 'YYYY-MM-DD' をローカル時刻の0時として解釈（UTC解釈によるズレを防ぐ）
+function parseDay(s){if(!s)return null;const[y,m,d]=String(s).split('-').map(Number);if(!y)return null;return new Date(y,(m||1)-1,d||1);}
+function todayD(){const n=new Date();n.setHours(0,0,0,0);return n;}
+function daysDiff(ds){const t=parseDay(ds);if(!t)return null;return Math.round((t-todayD())/86400000);}
+// 年齢：生年月日から今日時点で計算（全画面共通）
+function ageParts(dob){
+  const b=parseDay(dob);if(!b)return null;const n=todayD();
+  let months=(n.getFullYear()-b.getFullYear())*12+(n.getMonth()-b.getMonth());
+  if(n.getDate()<b.getDate())months--;
+  if(months<0)return null;
+  return{y:Math.floor(months/12),m:months%12};
 }
-function daysDiff(ds){if(!ds)return null;const n=new Date();n.setHours(0,0,0,0);return Math.round((new Date(ds)-n)/86400000);}
-function sexLabel(s){return{female:'女の子',male:'男の子','female-sp':'女の子（避妊済）','male-sp':'男の子（去勢済）'}[s]||s;}
+function ageLabel(dob){const a=ageParts(dob);if(!a)return'—';return a.y?`${a.y}歳${a.m}ヶ月`:`${a.m}ヶ月`;}
+function sexLabel(s){return{female:'女の子',male:'男の子','female-sp':'女の子（避妊済）','male-sp':'男の子（去勢済）'}[s]||s||'—';}
 function readURL(file){return new Promise((r,j)=>{const fr=new FileReader();fr.onload=e=>r(e.target.result);fr.onerror=j;fr.readAsDataURL(file);});}
 function compressImg(file,maxW=1200,q=0.72){
   return new Promise((res,rej)=>{
@@ -543,9 +815,9 @@ function compressImg(file,maxW=1200,q=0.72){
     fr.onload=e=>{
       const img=new Image();
       img.onload=()=>{
-        const ratio=Math.min(maxW/img.width,1);
+        const ratio=Math.min(maxW/Math.max(img.width,img.height),1);
         const cv=document.createElement('canvas');
-        cv.width=img.width*ratio;cv.height=img.height*ratio;
+        cv.width=Math.round(img.width*ratio);cv.height=Math.round(img.height*ratio);
         cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
         res(cv.toDataURL('image/jpeg',q));
       };
@@ -558,41 +830,49 @@ function compressImg(file,maxW=1200,q=0.72){
 // ══════════════════════════════════════
 // Tab switching
 // ══════════════════════════════════════
+let curTab='timeline';
 function switchTab(name){
   const btn=document.querySelector(`.tab[data-tab="${name}"]`);
   if(!btn)return;
+  curTab=name;
   document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));
   document.querySelectorAll('.pane').forEach(p=>p.classList.remove('on'));
   btn.classList.add('on');
+  document.getElementById('tabsIn').style.setProperty('--i',[...document.querySelectorAll('.tab')].indexOf(btn));
   document.getElementById('pane-'+name).classList.add('on');
+  document.getElementById('fab').classList.toggle('on',name==='timeline');
+  if(name==='timeline')renderFeed();
+  if(name==='dashboard'){renderDashboard();initCharts();}
+  if(name==='passport')renderPassport();
   if(name==='profile')populateForm();
   if(name==='docs')renderDocs();
+  window.scrollTo(0,0);
 }
 document.querySelectorAll('.tab').forEach(btn=>{
   btn.addEventListener('click',()=>switchTab(btn.dataset.tab));
 });
 
 // ══════════════════════════════════════
-// Avatar
+// Avatar (photo + illustration)
 // ══════════════════════════════════════
 async function handleAvatar(file){
   if(!file||!file.type.startsWith('image/'))return;
   try{
     const data=await compressImg(file,400,0.8);
-    D.pet.avatar=data;saveData();refreshAvatarUI();
+    D.pet.avatar=data;
+    D.pet.avatarToon=await makeToon(data);
+    saveData();refreshAvatarUI();renderDashboard();
     showToast('写真を更新しました ✓');
   }catch{showToast('写真の読み込みに失敗しました');}
 }
 function deleteAvatar(){
-  D.pet.avatar=null;saveData();refreshAvatarUI();
+  D.pet.avatar=null;D.pet.avatarToon=null;saveData();refreshAvatarUI();renderDashboard();
   showToast('写真を削除しました');
 }
 function refreshAvatarUI(){
   const av=D.pet.avatar;
-  // Header chip
-  const chipAv=document.getElementById('chipAv');
-  chipAv.innerHTML=av?`<img src="${av}" alt="">`:'🐩';
-  // Profile ring
+  document.getElementById('chipAv').innerHTML=av?`<img src="${av}" alt="">`:'🐩';
+  document.getElementById('chipName').textContent=D.pet.name||'';
   const ring=document.getElementById('avRing');
   if(ring){
     ring.innerHTML=av
@@ -602,12 +882,232 @@ function refreshAvatarUI(){
   const delBtn=document.getElementById('avDelBtn');
   if(delBtn)delBtn.style.display=av?'':'none';
 }
+// 写真 → イラスト風（平滑化・彩度アップ・色数削減・輪郭線）
+function makeToon(dataUrl){
+  return new Promise(res=>{
+    const img=new Image();
+    img.onload=()=>{
+      try{
+        const S=256,cv=document.createElement('canvas');cv.width=cv.height=S;
+        const x=cv.getContext('2d'),s=Math.min(img.width,img.height);
+        x.drawImage(img,(img.width-s)/2,(img.height-s)/2,s,s,0,0,S,S);
+        const id=x.getImageData(0,0,S,S),p=id.data,N=S*S;
+        let r=new Float32Array(N),g=new Float32Array(N),b=new Float32Array(N);
+        for(let i=0;i<N;i++){r[i]=p[i*4];g[i]=p[i*4+1];b[i]=p[i*4+2];}
+        const blur=(src,R)=>{ // 分離型ボックスブラー
+          const t=new Float32Array(N),o=new Float32Array(N);
+          for(let y=0;y<S;y++)for(let xx=0;xx<S;xx++){let a=0,c=0;for(let k=-R;k<=R;k++){const q=xx+k;if(q>=0&&q<S){a+=src[y*S+q];c++;}}t[y*S+xx]=a/c;}
+          for(let xx=0;xx<S;xx++)for(let y=0;y<S;y++){let a=0,c=0;for(let k=-R;k<=R;k++){const q=y+k;if(q>=0&&q<S){a+=t[q*S+xx];c++;}}o[y*S+xx]=a/c;}
+          return o;
+        };
+        r=blur(blur(r,2),1);g=blur(blur(g,2),1);b=blur(blur(b,2),1);
+        const L=new Float32Array(N);
+        for(let i=0;i<N;i++)L[i]=.299*r[i]+.587*g[i]+.114*b[i];
+        const lv=6,q=v=>Math.round(Math.max(0,Math.min(255,v))/255*lv)/lv*255;
+        for(let yy=0;yy<S;yy++)for(let xx=0;xx<S;xx++){
+          const i=yy*S+xx,gray=L[i];
+          let rr=gray+(r[i]-gray)*1.4,gg=gray+(g[i]-gray)*1.4,bb=gray+(b[i]-gray)*1.4;
+          rr=q(rr*1.04+6);gg=q(gg*1.04+6);bb=q(bb*1.04+6);
+          let e=0;
+          if(xx>0&&yy>0&&xx<S-1&&yy<S-1){
+            const at=(dx,dy)=>L[(yy+dy)*S+xx+dx];
+            const gx=-at(-1,-1)-2*at(-1,0)-at(-1,1)+at(1,-1)+2*at(1,0)+at(1,1);
+            const gy=-at(-1,-1)-2*at(0,-1)-at(1,-1)+at(-1,1)+2*at(0,1)+at(1,1);
+            e=Math.min(1,Math.max(0,(Math.hypot(gx,gy)-55)/70));
+          }
+          const k=1-e*.82;
+          p[i*4]=rr*k+40*(1-k)*.4;p[i*4+1]=gg*k+28*(1-k)*.4;p[i*4+2]=bb*k+20*(1-k)*.4;p[i*4+3]=255;
+        }
+        x.putImageData(id,0,0);
+        res(cv.toDataURL('image/jpeg',.85));
+      }catch(e){console.warn('toon failed',e);res(null);}
+    };
+    img.onerror=()=>res(null);
+    img.src=dataUrl;
+  });
+}
+function palFaceHTML(){
+  const t=D.pet.avatarToon;
+  return t?`<img src="${t}" alt="">`:'🐩';
+}
+function renderPalCard(){
+  const pet=D.pet,today=todayStr();
+  const done=D.daily.some(d=>d.date===today);
+  document.getElementById('palCard').innerHTML=`
+    <div class="pal">
+      <div class="pal-av"><div class="pal-face" id="palFace">${palFaceHTML()}</div></div>
+      <div style="min-width:0">
+        <div class="pal-name">${esc(pet.name||'—')}</div>
+        <div class="pal-sub">${esc(pet.breed||'—')} · ${ageLabel(pet.dob)}</div>
+        <button class="pal-st ${done?'done':''}" onclick="${done?"switchTab('timeline')":'openDaily()'}">${done?'✓ 今日の記録済み':'＋ 今日の記録をつける'}</button>
+      </div>
+    </div>`;
+}
+function playJoy(){
+  const pop=document.getElementById('joyPop');
+  pop.innerHTML=`<div class="pal-av"><div class="pal-face">${palFaceHTML()}</div></div><div class="joy-msg">記録ありがとう！</div>`;
+  const av=pop.querySelector('.pal-av');
+  ['💕','✨','💗','🐾','💕'].forEach((h,i)=>{
+    const s=document.createElement('span');s.className='heart';s.textContent=h;
+    s.style.left=`${18+i*14}%`;s.style.top='10%';s.style.setProperty('--dx',`${(i-2)*14}px`);
+    s.style.animationDelay=`${.15+i*.12}s`;av.appendChild(s);
+  });
+  pop.classList.add('on');
+  clearTimeout(pop._t);pop._t=setTimeout(()=>pop.classList.remove('on'),2200);
+  const f=document.getElementById('palFace');
+  if(f){f.classList.remove('joy');void f.offsetWidth;f.classList.add('joy');setTimeout(()=>f.classList.remove('joy'),1000);}
+}
+
+// ══════════════════════════════════════
+// Daily records
+// ══════════════════════════════════════
+const Q_OPTS={
+  poop:[['good','良い','ok'],['normal','普通','ok'],['loose','ゆるい','warn'],['diarrhea','下痢','bad'],['blood','血便','bad']],
+  pee:[['normal','普通','ok'],['more','多い','warn'],['less','少ない','warn'],['blood','血尿','bad']],
+  appetite:[['good','よく食べた','ok'],['normal','普通','ok'],['less','少なめ','warn'],['none','食べない','bad']]
+};
+const Q_ICON={poop:'💩',pee:'💧',appetite:'🍚'};
+const Q_DEFAULT={poop:'good',pee:'normal',appetite:'good'};
+function qInfo(k,v){const o=Q_OPTS[k].find(x=>x[0]===v);return o?{label:o[1],lvl:o[2]}:null;}
+let dDraft=null;
+function openDaily(){
+  dDraft={...Q_DEFAULT,photo:null};
+  document.getElementById('dDate').value=todayStr();
+  document.getElementById('dDate').max=todayStr();
+  document.getElementById('dMemo').value='';
+  document.getElementById('dPhoto').value='';
+  renderDailyOpts();renderDailyPhoto();
+  document.getElementById('dailyModal').classList.add('open');
+}
+function closeDaily(){document.getElementById('dailyModal').classList.remove('open');}
+function renderDailyOpts(){
+  document.querySelectorAll('#dailyModal .qopts').forEach(box=>{
+    const k=box.dataset.q;
+    box.innerHTML=Q_OPTS[k].map(([v,l,lvl])=>`<button class="qopt ${lvl}${dDraft[k]===v?' on':''}" onclick="dDraft.${k}='${v}';renderDailyOpts()">${l}</button>`).join('');
+  });
+}
+async function pickDailyPhoto(file){
+  if(!file||!file.type.startsWith('image/'))return;
+  try{dDraft.photo=await compressImg(file,560,0.62);renderDailyPhoto();}
+  catch{showToast('写真の読み込みに失敗しました');}
+}
+function clearDailyPhoto(){dDraft.photo=null;document.getElementById('dPhoto').value='';renderDailyPhoto();}
+function renderDailyPhoto(){
+  const box=document.getElementById('dPhBox'),inp=document.getElementById('dPhoto');
+  box.innerHTML=dDraft.photo?`<img src="${dDraft.photo}" alt="">`:'📷<small>写真</small>';
+  box.appendChild(inp);
+  document.getElementById('dPhDel').style.display=dDraft.photo?'':'none';
+}
+function saveDaily(){
+  const date=document.getElementById('dDate').value||todayStr();
+  const rec={id:'d'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),date,ts:Date.now(),
+    photo:dDraft.photo,poop:dDraft.poop,pee:dDraft.pee,appetite:dDraft.appetite,
+    memo:document.getElementById('dMemo').value.trim()};
+  D.daily.push(rec);
+  if(!saveData()){D.daily.pop();return;}
+  closeDaily();
+  renderFeed();renderPalCard();
+  showToast('記録しました ✓');
+  playJoy();
+}
+function delDaily(id){
+  if(!confirm('この記録を削除しますか？'))return;
+  D.daily=D.daily.filter(d=>d.id!==id);saveData();renderFeed();renderPalCard();
+}
+function viewPhoto(id){
+  const d=D.daily.find(x=>x.id===id);if(!d||!d.photo)return;
+  const w=window.open('','_blank');
+  w&&w.document.write(`<html><body style="margin:0;background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh"><img src="${d.photo}" style="max-width:100%;max-height:100vh;object-fit:contain"></body></html>`);
+}
+
+// ══════════════════════════════════════
+// Timeline (feed)
+// ══════════════════════════════════════
+let feedFilter='all';
+function setFeedFilter(f){
+  feedFilter=f;
+  document.querySelectorAll('#feedSeg button').forEach(b=>b.classList.toggle('on',b.dataset.f===f));
+  renderFeed();
+}
+document.querySelectorAll('#feedSeg button').forEach(b=>b.addEventListener('click',()=>setFeedFilter(b.dataset.f)));
+document.getElementById('feedQ').addEventListener('input',()=>renderFeed());
+
+function hl(text,terms){
+  let h=esc(text);
+  if(!terms.length)return h;
+  const re=new RegExp('('+terms.map(t=>esc(t).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|')+')','gi');
+  return h.replace(re,'<mark>$1</mark>');
+}
+function dayHeader(ds){
+  const d=parseDay(ds),dd=daysDiff(ds);
+  const wd='日月火水木金土'[d.getDay()];
+  const yr=d.getFullYear()!==new Date().getFullYear()?`<small>${d.getFullYear()}年</small>`:'';
+  const rel=dd===0?'今日':dd===-1?'昨日':'';
+  return`${yr}<span>${d.getMonth()+1}月${d.getDate()}日</span><small>（${wd}）</small>${rel?`<span class="rel">${rel}</span>`:''}`;
+}
+function renderFeed(){
+  const el=document.getElementById('feed');if(!el)return;
+  const raw=document.getElementById('feedQ').value.trim().toLowerCase();
+  const terms=raw?raw.split(/[\s　]+/).filter(Boolean):[];
+  const items=[];
+  if(feedFilter!=='visit'){
+    D.daily.forEach(d=>{
+      const tags=['poop','pee','appetite'].map(k=>qInfo(k,d[k])?.label||'').join(' ');
+      items.push({kind:'daily',date:d.date,ts:d.ts||0,d,hay:`${tags} ${d.memo||''}`.toLowerCase()});
+    });
+  }
+  if(feedFilter!=='daily'){
+    D.checkups.forEach(c=>items.push({kind:'visit',date:c.date,ts:-1,c,hay:`${c.vet||''} ${c.notes||''}`.toLowerCase()}));
+  }
+  const list=items.filter(it=>terms.every(t=>it.hay.includes(t)))
+    .sort((a,b)=>b.date.localeCompare(a.date)||b.ts-a.ts);
+  if(!list.length){
+    el.innerHTML=`<div class="feed-empty">${terms.length?'該当する記録がありません':feedFilter==='visit'?'診察の記録はまだありません<br>書類管理から明細書を読み取ると追加されます':'まだ記録がありません<br>右下の「今日の記録」から始めましょう'}</div>`;
+    return;
+  }
+  const groups=[];
+  for(const it of list){const g=groups[groups.length-1];if(g&&g.date===it.date)g.items.push(it);else groups.push({date:it.date,items:[it]});}
+  let html='';
+  for(const g of groups){
+    const hasVisit=g.items.some(i=>i.kind==='visit'),dd=daysDiff(g.date);
+    html+=`<div class="tl2-day"><div class="tl2-dot${hasVisit?' visit':''}${dd===0?' today':''}"></div><div class="tl2-date">${dayHeader(g.date)}</div>`;
+    for(const it of g.items){
+    if(it.kind==='daily'){
+      const d=it.d;
+      const chips=['poop','pee','appetite'].map(k=>{const q=qInfo(k,d[k]);return q?`<span class="dic ${q.lvl}">${Q_ICON[k]} ${hl(q.label,terms)}</span>`:'';}).join('');
+      const time=d.ts?new Date(d.ts):null;
+      html+=`<div class="dcard">
+        <div class="dcard-ph" ${d.photo?`onclick="viewPhoto('${d.id}')"`:''}>${d.photo?`<img src="${d.photo}" alt="" loading="lazy">`:'🐾'}</div>
+        <div class="dcard-body">
+          <div class="dicons">${chips}</div>
+          ${d.memo?`<div class="dmemo">${hl(d.memo,terms)}</div>`:''}
+        </div>
+        <button class="btn-rm" onclick="delDaily('${d.id}')" aria-label="削除">×</button>
+      </div>`;
+    }else{
+      const c=it.c,meta=[];
+      if(c.weight!=null)meta.push(`体重 ${c.weight} kg`);
+      if(c.temp!=null)meta.push(`体温 ${c.temp}°C`);
+      html+=`<div class="vcard">
+        <div class="vcard-tag">🏥 診察</div>
+        <div class="vcard-vet">${hl(c.vet||'動物病院',terms)}</div>
+        <div class="vcard-notes">${hl(c.notes||'',terms).replace(/\n/g,'<br>')}</div>
+        ${meta.length?`<div class="vcard-meta">${meta.map(m=>`<span class="vmeta">${m}</span>`).join('')}</div>`:''}
+      </div>`;
+    }
+    }
+    html+='</div>';
+  }
+  el.innerHTML=html;
+}
 
 // ══════════════════════════════════════
 // Dashboard
 // ══════════════════════════════════════
+function shortDay(ds){const d=parseDay(ds);return d?`${d.getMonth()+1}/${d.getDate()}`:'';}
 function renderDashboard(){
   const{pet,checkups,weightLog}=D;
+  renderPalCard();
   const sortedWl=[...weightLog].sort((a,b)=>a.month.localeCompare(b.month));
   const last=sortedWl[sortedWl.length-1];
   const prev=sortedWl[sortedWl.length-2];
@@ -615,23 +1115,33 @@ function renderDashboard(){
   const pw=prev?.weight;
   const delta=pw?((lw-pw)/pw*100).toFixed(1):null;
   const dc=delta===null?'neu':Math.abs(parseFloat(delta))>=5?'neg':'neu';
+
+  // 次回健診：次回健診日から今日を基準に自動計算
   const dd=daysDiff(pet.nextVisit);
+  let nv;
+  if(dd===null)nv={v:'—',u:'',l:'次回健診まで',s:'未設定',c:'neu'};
+  else if(dd>0)nv={v:dd,u:'日',l:'次回健診まで',s:shortDay(pet.nextVisit),c:dd<=7?'neg':'neu'};
+  else if(dd===0)nv={v:'今日',u:'',l:'次回健診',s:shortDay(pet.nextVisit),c:'neg'};
+  else nv={v:-dd,u:'日超過',l:'健診予定日から',s:shortDay(pet.nextVisit)+' を過ぎています',c:'neg'};
+
+  const t=pet.temp;
+  const tState=t==null?['neu','—']:(t<37.5||t>39.2)?['neg','要確認']:['pos','正常域'];
 
   document.getElementById('kpiRow').innerHTML=`
     <div class="kpi">
-      <div class="kv">${lw}<span class="ku">kg</span></div>
+      <div class="kv">${lw??'—'}<span class="ku">kg</span></div>
       <div class="kl">現在の体重</div>
       <div class="kd ${dc}">${delta===null?'—':parseFloat(delta)<0?`▼ ${delta}%`:`▲ +${delta}%`}</div>
     </div>
     <div class="kpi">
-      <div class="kv">${pet.temp}<span class="ku">°C</span></div>
+      <div class="kv">${t??'—'}<span class="ku">°C</span></div>
       <div class="kl">最終体温</div>
-      <div class="kd neu">— 正常域</div>
+      <div class="kd ${tState[0]}">${tState[1]}</div>
     </div>
     <div class="kpi">
-      <div class="kv">${dd!==null?Math.abs(dd):'—'}<span class="ku">${dd!==null?'日':''}</span></div>
-      <div class="kl">次回健診まで</div>
-      <div class="kd neu">${pet.nextVisit?fmtDate(pet.nextVisit).slice(0,-1):'未設定'}</div>
+      <div class="kv">${nv.v}<span class="ku">${nv.u}</span></div>
+      <div class="kl">${nv.l}</div>
+      <div class="kd ${nv.c}">${nv.s}</div>
     </div>`;
 
   const al=document.getElementById('dashAlert');
@@ -642,16 +1152,15 @@ function renderDashboard(){
     al.innerHTML=`<div class="alert warn"><div class="alert-icon">⚠</div><div><div class="alert-ttl">AI 健康アドバイス</div><div class="alert-body">前回から体重が <strong>+${delta}%</strong> 増加しています。食事量を確認し、次回健診で相談してください。</div></div></div>`;
   }else{al.innerHTML='';}
 
-  // Weight log list
   renderWlList(sortedWl);
+  renderLabChips();
 
-  // Checkup TL
   const sorted=[...checkups].sort((a,b)=>b.date.localeCompare(a.date));
-  document.getElementById('dashTl').innerHTML=sorted.slice(0,3).map((c,i)=>`
+  document.getElementById('dashTl').innerHTML=sorted.length?sorted.slice(0,3).map((c,i)=>`
     <div class="tl-row">
       <div class="tl-dc"><div class="dot ${i?'off':''}"></div></div>
-      <div><div class="tl-date">${fmtDate(c.date)} — ${c.vet}</div><div class="tl-text">${c.notes}</div></div>
-    </div>`).join('');
+      <div><div class="tl-date">${fmtDate(c.date)} — ${esc(c.vet)}</div><div class="tl-text">${esc(c.notes)}</div></div>
+    </div>`).join(''):'<div style="font-size:13px;color:var(--t3)">記録なし</div>';
 }
 
 // ── Weight Log ──
@@ -659,14 +1168,13 @@ function toggleWlForm(){
   const w=document.getElementById('wlAddWrap');
   w.classList.toggle('open');
   if(w.classList.contains('open')){
-    // pre-fill month to next empty month
     const sortedWl=[...D.weightLog].sort((a,b)=>a.month.localeCompare(b.month));
     const last=sortedWl[sortedWl.length-1];
     if(last){
       const[y,m]=last.month.split('-').map(Number);
       const next=m===12?`${y+1}-01`:`${y}-${String(m+1).padStart(2,'0')}`;
       document.getElementById('wl-mo').value=next;
-    }
+    }else{document.getElementById('wl-mo').value=todayStr().slice(0,7);}
     document.getElementById('wl-wt').value='';
     document.getElementById('wl-wt').focus();
   }
@@ -679,9 +1187,7 @@ function addWeightEntry(){
   if(existing>=0)D.weightLog[existing].weight=wt;
   else D.weightLog.push({month:mo,weight:wt});
   D.weightLog.sort((a,b)=>a.month.localeCompare(b.month));
-  // Update pet.weight with latest
-  const last=D.weightLog[D.weightLog.length-1];
-  D.pet.weight=last.weight;
+  D.pet.weight=D.weightLog[D.weightLog.length-1].weight;
   saveData();
   document.getElementById('wlAddWrap').classList.remove('open');
   renderDashboard();initCharts();
@@ -713,30 +1219,63 @@ function renderWlList(sorted){
 }
 
 // ══════════════════════════════════════
+// Lab history
+// ══════════════════════════════════════
+const LAB_META={
+  alt:{lbl:'ALT（GPT）',short:'ALT',u:'U/L',rng:[10,65],ref:'10–65'},
+  bun:{lbl:'BUN（尿素窒素）',short:'BUN',u:'mg/dL',rng:[7,27],ref:'7–27'},
+  cre:{lbl:'クレアチニン',short:'Cre',u:'mg/dL',rng:[0.5,1.5],ref:'0.5–1.5'},
+  wbc:{lbl:'WBC（白血球）',short:'WBC',u:'×10³',rng:[6,17],ref:'6.0–17.0'},
+  hgb:{lbl:'Hgb（ヘモグロビン）',short:'Hgb',u:'g/dL',rng:[12,18],ref:'12.0–18.0'},
+  plt:{lbl:'PLT（血小板）',short:'PLT',u:'×10³',rng:[200,500],ref:'200–500'}
+};
+function labCls(k,v){if(v==null)return'';const[lo,hi]=LAB_META[k].rng;return(v<lo||v>hi)?'hi':'ok';}
+function sortedLabs(){return[...D.labHistory].sort((a,b)=>(a.date||'').localeCompare(b.date||''));}
+// 各項目の「最新の値」を集約（項目ごとに直近の記録を採用）
+function latestLabs(){
+  const out={date:null};
+  for(const e of sortedLabs()){
+    let used=false;
+    LAB_KEYS.forEach(k=>{if(e[k]!=null){out[k]=e[k];used=true;}});
+    if(used)out.date=e.date;
+  }
+  return out;
+}
+function upsertLab(entry){
+  const i=D.labHistory.findIndex(e=>e.date===entry.date);
+  if(i>=0){LAB_KEYS.forEach(k=>{if(entry[k]!=null)D.labHistory[i][k]=entry[k];});}
+  else D.labHistory.push(entry);
+  D.labHistory.sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+}
+let labKey='alt';
+function renderLabChips(){
+  const lt=latestLabs();
+  document.getElementById('labChips').innerHTML=LAB_KEYS.map(k=>
+    `<button class="lchip${k===labKey?' on':''} ${labCls(k,lt[k])}" onclick="labKey='${k}';renderLabChips();drawLabChart()">${LAB_META[k].short}</button>`).join('');
+}
+
+// ══════════════════════════════════════
 // Charts
 // ══════════════════════════════════════
-let wChart,tChart;
+let wChart,tChart,lChart;
 const GC='rgba(0,0,0,0.06)',TK={font:{size:10},color:'#999'};
 function initCharts(){
+  if(typeof Chart==='undefined')return;
   const sortedWl=[...D.weightLog].sort((a,b)=>a.month.localeCompare(b.month));
   const wLabels=sortedWl.map(e=>fmtMonth(e.month));
   const wData=sortedWl.map(e=>e.weight);
-  const sortedChk=[...D.checkups].sort((a,b)=>a.date.localeCompare(b.date));
+  const sortedChk=[...D.checkups].filter(c=>c.temp!=null).sort((a,b)=>a.date.localeCompare(b.date));
   const tLabels=sortedChk.map(c=>{const[y,m]=c.date.split('-');return`${y.slice(2)}/${+m}`;});
-  const tData=sortedChk.map(c=>c.temp||null);
+  const tData=sortedChk.map(c=>c.temp);
   if(wChart)wChart.destroy();if(tChart)tChart.destroy();
   wChart=new Chart(document.getElementById('wChart'),{
     type:'line',
-    data:{
-      labels:wLabels,
-      datasets:[{
-        data:wData,borderColor:'#111',backgroundColor:'rgba(17,17,17,0.07)',borderWidth:2,
-        pointBackgroundColor:wData.map((_,i,a)=>i===a.length-1?'#111':'#ccc'),
-        pointBorderColor:wData.map((_,i,a)=>i===a.length-1?'#111':'#ccc'),
-        pointRadius:wData.map((_,i,a)=>i===a.length-1?6:3),
-        pointHoverRadius:7,fill:true,tension:0.35
-      }]
-    },
+    data:{labels:wLabels,datasets:[{
+      data:wData,borderColor:'#111',backgroundColor:'rgba(17,17,17,0.07)',borderWidth:2,
+      pointBackgroundColor:wData.map((_,i,a)=>i===a.length-1?'#111':'#ccc'),
+      pointBorderColor:wData.map((_,i,a)=>i===a.length-1?'#111':'#ccc'),
+      pointRadius:wData.map((_,i,a)=>i===a.length-1?6:3),
+      pointHoverRadius:7,fill:true,tension:0.35}]},
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.parsed.y.toFixed(2)} kg`}}},
       scales:{x:{grid:{display:false},ticks:TK},y:{grid:{color:GC},ticks:{...TK,callback:v=>v.toFixed(1)}}}}
@@ -744,40 +1283,60 @@ function initCharts(){
   document.getElementById('wCap').textContent=sortedWl.length?`kg · ${fmtMonth(sortedWl[0].month)} 〜 ${fmtMonth(sortedWl[sortedWl.length-1].month)}`:'';
   tChart=new Chart(document.getElementById('tChart'),{
     type:'line',
-    data:{
-      labels:tLabels,
-      datasets:[
-        {label:'体温',data:tData,borderColor:'#111',backgroundColor:'rgba(17,17,17,0.07)',borderWidth:2,pointBackgroundColor:'#111',pointRadius:5,pointHoverRadius:7,fill:true,tension:0.3},
-        {data:tLabels.map(()=>39.2),borderColor:'#d4ac30',borderWidth:1.5,borderDash:[5,4],pointRadius:0,fill:false},
-        {data:tLabels.map(()=>37.5),borderColor:'#6db894',borderWidth:1.5,borderDash:[5,4],pointRadius:0,fill:false}
-      ]
-    },
+    data:{labels:tLabels,datasets:[
+      {label:'体温',data:tData,borderColor:'#111',backgroundColor:'rgba(17,17,17,0.07)',borderWidth:2,pointBackgroundColor:'#111',pointRadius:5,pointHoverRadius:7,fill:true,tension:0.3},
+      {data:tLabels.map(()=>39.2),borderColor:'#d4ac30',borderWidth:1.5,borderDash:[5,4],pointRadius:0,fill:false},
+      {data:tLabels.map(()=>37.5),borderColor:'#6db894',borderWidth:1.5,borderDash:[5,4],pointRadius:0,fill:false}]},
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.datasetIndex===0?` ${c.parsed.y}°C`:''}}},
       scales:{x:{grid:{display:false},ticks:TK},y:{min:37,max:39.5,grid:{color:GC},ticks:{...TK,callback:v=>v.toFixed(1)+'°'}}}}
   });
+  drawLabChart();
+}
+function drawLabChart(){
+  if(typeof Chart==='undefined')return;
+  const m=LAB_META[labKey];
+  const pts=sortedLabs().filter(e=>e[labKey]!=null);
+  const labels=pts.map(e=>{const d=parseDay(e.date);return d?`${String(d.getFullYear()).slice(2)}/${d.getMonth()+1}/${d.getDate()}`:'?';});
+  const data=pts.map(e=>e[labKey]);
+  const[lo,hi]=m.rng;
+  const col=data.map((v,i,a)=>(v<lo||v>hi)?'#b91c1c':i===a.length-1?'#111':'#ccc');
+  if(lChart)lChart.destroy();
+  lChart=new Chart(document.getElementById('lChart'),{
+    type:'line',
+    data:{labels,datasets:[
+      {data,borderColor:'#111',backgroundColor:'rgba(17,17,17,0.07)',borderWidth:2,
+        pointBackgroundColor:col,pointBorderColor:col,
+        pointRadius:data.map((_,i,a)=>i===a.length-1?6:4),pointHoverRadius:7,fill:true,tension:0.3},
+      {data:labels.map(()=>hi),borderColor:'#d4ac30',borderWidth:1.5,borderDash:[5,4],pointRadius:0,fill:false},
+      {data:labels.map(()=>lo),borderColor:'#6db894',borderWidth:1.5,borderDash:[5,4],pointRadius:0,fill:false}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.datasetIndex===0?` ${c.parsed.y} ${m.u}`:''}}},
+      scales:{x:{grid:{display:false},ticks:TK},y:{grid:{color:GC},ticks:TK}}}
+  });
+  document.getElementById('lCap').textContent=pts.length
+    ?`${m.lbl} · ${m.u} · 基準 ${m.ref}（点線）${pts.length<2?' · 2回以上記録すると推移が見えます':''}`
+    :'まだ記録がありません · プロフィール編集または書類の読み取りから追加できます';
 }
 
 // ══════════════════════════════════════
 // Passport
 // ══════════════════════════════════════
-const LAB_REF={alt:'10–65',bun:'7–27',cre:'0.5–1.5',wbc:'6.0–17.0',hgb:'12.0–18.0',plt:'200–500'};
-const LAB_RNG={alt:[10,65],bun:[7,27],cre:[0.5,1.5],wbc:[6,17],hgb:[12,18],plt:[200,500]};
-function labCls(k,v){if(v==null)return'';const[lo,hi]=LAB_RNG[k];return(v<lo||v>hi)?'hi':'ok';}
-
-function renderPassport(){
-  const{pet,allergies,conditions,medications,labs}=D;
-  const age=calcAge(pet.dob);
-  const pid=`PET-${(pet.dob||'????').slice(0,4)}-${(pet.name||'?').slice(0,3).toUpperCase()}-${(pet.dob||'').replace(/-/g,'').slice(4,8)||'????'}`;
-  const photoHtml=pet.avatar?`<div class="hero-photo"><img src="${pet.avatar}" alt="${pet.name}"></div>`:`<div class="hero-photo">🐩</div>`;
-  document.getElementById('passportBody').innerHTML=`
+function passportSrc(){
+  return{pet:D.pet,allergies:D.allergies,conditions:D.conditions,medications:D.medications,labs:latestLabs(),checkups:D.checkups};
+}
+function petId(pet){return`PET-${(pet.dob||'????').slice(0,4)}-${(pet.name||'?').slice(0,3).toUpperCase()}-${(pet.dob||'').replace(/-/g,'').slice(4,8)||'????'}`;}
+function passportHTML(src){
+  const{pet,allergies,conditions,medications,labs}=src;
+  const photoHtml=pet.avatar?`<div class="hero-photo"><img src="${pet.avatar}" alt=""></div>`:`<div class="hero-photo">🐩</div>`;
+  return`
     <div class="hero">
       <div class="hero-inner">
         <div style="flex:1">
           <div class="hero-tag">Digital Pet Passport</div>
-          <div class="hero-name">${pet.name||'—'}</div>
-          <div class="hero-sub">${pet.breed||'—'}（${pet.color||'—'}）· ${sexLabel(pet.sex)} · ${age}歳</div>
-          <div class="hero-id">ID: ${pid}</div>
+          <div class="hero-name">${esc(pet.name||'—')}</div>
+          <div class="hero-sub">${esc(pet.breed||'—')}（${esc(pet.color||'—')}）· ${esc(sexLabel(pet.sex))} · ${ageLabel(pet.dob)}</div>
+          <div class="hero-id">ID: ${esc(petId(pet))}</div>
         </div>
         ${photoHtml}
       </div>
@@ -786,78 +1345,250 @@ function renderPassport(){
       <div class="clabel mb">基本情報</div>
       <div class="ig">
         <div><div class="ig-l">生年月日</div><div class="ig-v">${fmtDate(pet.dob)}</div></div>
-        <div><div class="ig-l">マイクロチップ</div><div class="ig-v">${pet.microchip||'—'}</div></div>
-        <div><div class="ig-l">体重（最終）</div><div class="ig-v">${pet.weight} kg</div></div>
-        <div><div class="ig-l">血液型</div><div class="ig-v">${pet.bloodType||'—'}</div></div>
-        <div><div class="ig-l">かかりつけ医</div><div class="ig-v">${pet.vet||'—'}</div></div>
+        <div><div class="ig-l">年齢</div><div class="ig-v">${ageLabel(pet.dob)}</div></div>
+        <div><div class="ig-l">体重（最終）</div><div class="ig-v">${pet.weight!=null?esc(pet.weight)+' kg':'—'}</div></div>
+        <div><div class="ig-l">血液型</div><div class="ig-v">${esc(pet.bloodType||'—')}</div></div>
+        <div><div class="ig-l">マイクロチップ</div><div class="ig-v">${esc(pet.microchip||'—')}</div></div>
+        <div><div class="ig-l">かかりつけ医</div><div class="ig-v">${esc(pet.vet||'—')}</div></div>
         <div><div class="ig-l">最終受診日</div><div class="ig-v">${fmtDate(pet.lastVisit)}</div></div>
       </div>
     </div>
     <div class="card">
       <div class="clabel mb">アレルギー</div>
-      ${allergies.length?`<div class="tags">${allergies.map(a=>`<span class="tag al">🚫 ${a.name}（${a.type}）</span>`).join('')}</div>`:'<div style="font-size:13px;color:var(--t3)">なし</div>'}
+      ${allergies.length?`<div class="tags">${allergies.map(a=>`<span class="tag al">🚫 ${esc(a.name)}（${esc(a.type)}）</span>`).join('')}</div>`:'<div style="font-size:13px;color:var(--t3)">なし</div>'}
     </div>
     <div class="card">
       <div class="clabel mb">既往歴・経過観察</div>
-      <div class="tl">${conditions.map(c=>`
+      ${conditions.length?`<div class="tl">${conditions.map(c=>`
         <div class="tl-row">
           <div class="tl-dc"><div class="dot ${c.status==='active'?'':'off'}"></div></div>
-          <div><div class="tl-date">${fmtDate(c.date)} — ${c.status==='active'?'経過観察中':'治療完了'}</div><div class="tl-text">${c.name}</div></div>
-        </div>`).join('')}</div>
+          <div><div class="tl-date">${fmtDate(c.date)} — ${c.status==='active'?'経過観察中':'治療完了'}</div><div class="tl-text">${esc(c.name)}</div></div>
+        </div>`).join('')}</div>`:'<div style="font-size:13px;color:var(--t3)">なし</div>'}
     </div>
     <div class="card">
       <div class="clabel mb">現在の処方薬</div>
-      ${medications.length?medications.map(m=>`<div class="med-row"><div><div class="med-name">${m.name}</div><div class="med-sub">${m.dose}</div></div><span class="med-badge">${m.frequency}</span></div>`).join(''):'<div style="font-size:13px;color:var(--t3)">なし</div>'}
+      ${medications.length?medications.map(m=>`<div class="med-row"><div><div class="med-name">${esc(m.name)}</div><div class="med-sub">${esc(m.dose)}</div></div><span class="med-badge">${esc(m.frequency)}</span></div>`).join(''):'<div style="font-size:13px;color:var(--t3)">なし</div>'}
     </div>
     <div class="card">
       <div class="clabel mb">直近の検査結果 — ${fmtDate(labs.date)}</div>
       <div class="lab-grid">
-        ${[['alt','ALT（GPT）','U/L'],['bun','BUN（尿素窒素）','mg/dL'],['cre','クレアチニン','mg/dL'],['wbc','WBC（白血球）','×10³'],['hgb','Hgb（ヘモグロビン）','g/dL'],['plt','PLT（血小板）','×10³']].map(([k,lbl,u])=>`
+        ${LAB_KEYS.map(k=>`
           <div class="lab-cell">
-            <div class="lab-name">${lbl}</div>
-            <div class="lab-val ${labCls(k,labs[k])}">${labs[k]??'—'} <small style="font-size:10px;font-weight:600">${u}</small></div>
-            <div class="lab-range">基準: ${LAB_REF[k]}</div>
+            <div class="lab-name">${LAB_META[k].lbl}</div>
+            <div class="lab-val ${labCls(k,labs[k])}">${labs[k]!=null?esc(labs[k]):'—'} <small style="font-size:10px;font-weight:600">${LAB_META[k].u}</small></div>
+            <div class="lab-range">基準: ${LAB_META[k].ref}</div>
           </div>`).join('')}
       </div>
+    </div>`;
+}
+function renderPassport(){
+  document.getElementById('passportBody').innerHTML=passportHTML(passportSrc())+
+    `<div class="fnote">最終受診: ${fmtDate(D.pet.lastVisit)}</div>`;
+  refreshShareUrl();
+}
+
+// ══════════════════════════════════════
+// Share (QR) — パスポートの要約をURLに埋め込む（サーバー不要）
+// ══════════════════════════════════════
+function b64uEnc(bytes){let s='';for(let i=0;i<bytes.length;i+=0x8000)s+=String.fromCharCode.apply(null,bytes.subarray(i,i+0x8000));return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
+function b64uDec(str){const s=atob(str.replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from(s,c=>c.charCodeAt(0));}
+async function streamBytes(bytes,ts){return new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(ts)).arrayBuffer());}
+async function encodeShare(obj){
+  const bytes=new TextEncoder().encode(JSON.stringify(obj));
+  if(typeof CompressionStream!=='undefined'){
+    try{return'z'+b64uEnc(await streamBytes(bytes,new CompressionStream('deflate-raw')));}catch{}
+  }
+  return'j'+b64uEnc(bytes);
+}
+async function decodeShare(str){
+  const kind=str[0],bytes=b64uDec(str.slice(1));
+  let raw=bytes;
+  if(kind==='z'){
+    if(typeof DecompressionStream==='undefined')throw new Error('このブラウザは共有データの展開に対応していません');
+    raw=await streamBytes(bytes,new DecompressionStream('deflate-raw'));
+  }
+  return JSON.parse(new TextDecoder().decode(raw));
+}
+function shareSummary(dropDone){
+  const{pet}=D,l=latestLabs();
+  return{v:1,t:todayStr(),
+    p:{n:pet.name,b:pet.breed,c:pet.color,s:pet.sex,d:pet.dob,w:pet.weight,bt:pet.bloodType,mc:pet.microchip,vt:pet.vet,lv:pet.lastVisit},
+    a:D.allergies.map(a=>[a.type,a.name]),
+    c:D.conditions.filter(c=>!dropDone||c.status==='active').map(c=>[c.date,c.name,c.status==='active'?1:0]),
+    m:D.medications.map(m=>[m.name,m.dose,m.frequency]),
+    l:[l.date,...LAB_KEYS.map(k=>l[k]??null)]};
+}
+function expandShare(o){
+  const p=o.p||{},l=o.l||[],labs={date:l[0]||null};
+  LAB_KEYS.forEach((k,i)=>labs[k]=l[i+1]??null);
+  return{sharedAt:o.t,
+    pet:{name:p.n,breed:p.b,color:p.c,sex:p.s,dob:p.d,weight:p.w,bloodType:p.bt,microchip:p.mc,vet:p.vt,lastVisit:p.lv,avatar:null},
+    allergies:(o.a||[]).map(([type,name])=>({type,name})),
+    conditions:(o.c||[]).map(([date,name,st])=>({date,name,status:st?'active':'done'})),
+    medications:(o.m||[]).map(([name,dose,frequency])=>({name,dose,frequency})),
+    labs,checkups:[]};
+}
+const QR_MAX=2200;
+let SHARE_URL=null,SHARE_NOTE='';
+async function buildShareUrl(){
+  const base=location.href.split('#')[0];
+  let url=base+'#s='+await encodeShare(shareSummary(false)),note='';
+  if(url.length>QR_MAX){url=base+'#s='+await encodeShare(shareSummary(true));note='情報量が多いため、治療完了の既往歴はQRから省いています（印刷版には全件載ります）。';}
+  if(url.length>QR_MAX)return{url:null,note:'情報量が多すぎてQRコードに収まりません。「印刷／PDF」をご利用ください。'};
+  return{url,note};
+}
+async function refreshShareUrl(){
+  try{const r=await buildShareUrl();SHARE_URL=r.url;SHARE_NOTE=r.note;}catch(e){SHARE_URL=null;SHARE_NOTE='';}
+}
+async function openQr(){
+  const box=document.getElementById('qrBig');
+  box.innerHTML='<div class="spinner" style="margin:40px auto"></div>';
+  document.getElementById('qrModal').classList.add('open');
+  await refreshShareUrl();
+  if(!SHARE_URL){box.innerHTML=`<div class="qr-warn">${esc(SHARE_NOTE||'QRコードを作成できませんでした')}</div>`;return;}
+  const local=location.protocol==='file:'||/^(localhost|127\.)/.test(location.hostname);
+  box.innerHTML=`<canvas id="qrBigCv"></canvas>
+    <div class="qr-note">病院や家族のスマホでこのQRを読み取ると、<b>${esc(todayStr().replace(/-/g,'/'))}時点</b>のパスポート（写真を除く）が閲覧専用で開きます。データはURLの中に含まれており、サーバーには保存されません。<br>URLを知っている人は誰でも見られるため、共有先にご注意ください。</div>
+    ${SHARE_NOTE?`<div class="qr-warn">${esc(SHARE_NOTE)}</div>`:''}
+    ${local?`<div class="qr-warn">今はファイルを直接開いているため、他の端末からは開けません。GitHub Pages など公開URLで開いてからQRを作成してください。</div>`:''}
+    <div style="display:flex;gap:8px;margin-top:14px;width:100%">
+      <button class="btn-sec" style="flex:1" onclick="copyShare()">リンクをコピー</button>
+      ${navigator.share?`<button class="btn-sec" style="flex:1" onclick="navigator.share({title:'Pet Passport',url:SHARE_URL}).catch(()=>{})">共有…</button>`:''}
+    </div>`;
+  if(typeof QRCode==='undefined'){box.querySelector('canvas').outerHTML='<div class="qr-warn">QRライブラリを読み込めませんでした。通信環境を確認してください。</div>';return;}
+  QRCode.toCanvas(document.getElementById('qrBigCv'),SHARE_URL,{width:260,margin:1,errorCorrectionLevel:'L',color:{dark:'#111',light:'#fff'}},err=>{
+    if(err){console.error(err);document.getElementById('qrBigCv').outerHTML='<div class="qr-warn">QRコードを作成できませんでした。「印刷／PDF」をご利用ください。</div>';}
+  });
+}
+function closeQr(){document.getElementById('qrModal').classList.remove('open');}
+function copyShare(){
+  if(!SHARE_URL)return;
+  (navigator.clipboard?navigator.clipboard.writeText(SHARE_URL):Promise.reject()).then(()=>showToast('リンクをコピーしました ✓')).catch(()=>{prompt('このリンクをコピーしてください',SHARE_URL);});
+}
+
+let SHARED_SRC=null;
+async function initShared(){
+  const m=location.hash.match(/^#s=(.+)$/);
+  if(!m)return false;
+  document.body.classList.add('shared');
+  document.querySelectorAll('.pane').forEach(p=>p.classList.remove('on'));
+  document.getElementById('pane-shared').classList.add('on');
+  try{
+    SHARED_SRC=expandShare(await decodeShare(m[1]));
+    document.getElementById('chipName').textContent=SHARED_SRC.pet.name||'';
+    document.getElementById('sharedBar').innerHTML=`共有されたパスポート（閲覧専用）<br>${fmtDate(SHARED_SRC.sharedAt)}時点の情報です。年齢は今日の日付で計算しています。`;
+    document.getElementById('sharedBody').innerHTML=passportHTML(SHARED_SRC);
+  }catch(e){
+    console.error(e);
+    document.getElementById('sharedBar').textContent='共有データを読み込めませんでした。QRコードをもう一度読み取ってください。';
+  }
+  return true;
+}
+
+// ══════════════════════════════════════
+// Print (A4 1枚)
+// ══════════════════════════════════════
+function printHTML(src,qrUrl){
+  const{pet,allergies,conditions,medications,labs}=src;
+  const visits=[...(src.checkups||[])].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3);
+  const row=(k,v)=>`<tr><th>${k}</th><td>${v}</td></tr>`;
+  return`
+  <div class="pr-hd">
+    ${pet.avatar?`<img class="pr-photo" src="${pet.avatar}" alt="">`:''}
+    <div>
+      <div class="pr-tag">DIGITAL PET PASSPORT</div>
+      <div class="pr-name">${esc(pet.name||'—')}</div>
+      <div class="pr-sub">${esc(pet.breed||'—')}（${esc(pet.color||'—')}）· ${esc(sexLabel(pet.sex))} · ${ageLabel(pet.dob)}</div>
+      <div class="pr-id">ID: ${esc(petId(pet))}</div>
     </div>
-    <div class="card">
-      <div class="clabel mb">デジタル共有 / QR コード</div>
-      <div class="qr-wrap">
-        <canvas id="qrCanvas" width="88" height="88"></canvas>
-        <div><div class="qr-ttl">他院への情報共有</div><div class="qr-desc">QR コードで転院先の病院でもすぐに共有できます。</div></div>
+    ${qrUrl?`<div class="pr-qr"><canvas id="prQr"></canvas>スマホで閲覧</div>`:''}
+  </div>
+  <div class="pr-grid">
+    <div>
+      <div class="pr-sec"><div class="pr-h">基本情報</div><table>
+        ${row('生年月日',`${fmtDate(pet.dob)}（${ageLabel(pet.dob)}）`)}
+        ${row('体重（最終）',pet.weight!=null?esc(pet.weight)+' kg':'—')}
+        ${row('血液型',esc(pet.bloodType||'—'))}
+        ${row('マイクロチップ',esc(pet.microchip||'—'))}
+        ${row('かかりつけ医',esc(pet.vet||'—'))}
+        ${row('最終受診日',fmtDate(pet.lastVisit))}
+      </table></div>
+      <div class="pr-sec" style="margin-top:12px"><div class="pr-h">アレルギー</div>
+        ${allergies.length?allergies.map(a=>`<div class="pr-li"><span class="pr-al">${esc(a.name)}</span>（${esc(a.type)}）</div>`).join(''):'<div class="pr-li">なし</div>'}
+      </div>
+      <div class="pr-sec" style="margin-top:12px"><div class="pr-h">現在の処方薬</div>
+        ${medications.length?medications.map(m=>`<div class="pr-li"><b>${esc(m.name)}</b><br>${esc(m.dose)} · ${esc(m.frequency)}</div>`).join(''):'<div class="pr-li">なし</div>'}
       </div>
     </div>
-    <div class="fnote">最終更新: ${fmtDate(pet.lastVisit)}</div>`;
-  setTimeout(()=>{
-    const cv=document.getElementById('qrCanvas');
-    if(cv)QRCode.toCanvas(cv,`https://petpassport.example/pet/${encodeURIComponent(pet.name||'PET')}`,{width:88,margin:1,color:{dark:'#111',light:'#fff'}});
-  },60);
+    <div>
+      <div class="pr-sec"><div class="pr-h">直近の検査結果 — ${fmtDate(labs.date)}</div><table>
+        <tr><th>項目</th><th style="width:auto">値</th><th style="width:auto">基準</th></tr>
+        ${LAB_KEYS.map(k=>`<tr><td>${LAB_META[k].lbl}</td><td class="${labCls(k,labs[k])==='hi'?'pr-hi':''}">${labs[k]!=null?esc(labs[k]):'—'} ${LAB_META[k].u}</td><td style="color:#888">${LAB_META[k].ref}</td></tr>`).join('')}
+      </table></div>
+      <div class="pr-sec" style="margin-top:12px"><div class="pr-h">既往歴・経過観察</div>
+        ${conditions.length?conditions.map(c=>`<div class="pr-li">${c.status==='active'?'● ':'○ '}${fmtDate(c.date)}（${c.status==='active'?'経過観察中':'治療完了'}）<br>${esc(c.name)}</div>`).join(''):'<div class="pr-li">なし</div>'}
+      </div>
+      ${visits.length?`<div class="pr-sec" style="margin-top:12px"><div class="pr-h">直近の受診</div>
+        ${visits.map(v=>`<div class="pr-li">${fmtDate(v.date)} ${esc(v.vet||'')}<br>${esc(v.notes||'')}</div>`).join('')}
+      </div>`:''}
+    </div>
+  </div>
+  <div class="pr-ft"><span>出力日 ${fmtDate(todayStr())}${src.sharedAt?` · 共有データ ${fmtDate(src.sharedAt)}時点`:''}</span><span>pet passport</span></div>`;
 }
+function preparePrint(src){
+  src=src||(document.body.classList.contains('shared')?SHARED_SRC:passportSrc());
+  if(!src)return;
+  const pa=document.getElementById('printArea');
+  const qrUrl=src===SHARED_SRC?null:SHARE_URL;
+  pa.innerHTML=printHTML(src,qrUrl);
+  if(qrUrl&&typeof QRCode!=='undefined'){
+    QRCode.toCanvas(document.getElementById('prQr'),qrUrl,{width:180,margin:0,errorCorrectionLevel:'L'},err=>{if(err){const c=document.getElementById('prQr');c&&c.parentNode.remove();}});
+  }
+  // A4（余白10mm）に収まるよう縮小率を計算
+  pa.style.zoom='';
+  Object.assign(pa.style,{display:'block',position:'absolute',left:'-10000px',top:'0',width:'718px'});
+  const h=pa.scrollHeight;
+  Object.assign(pa.style,{display:'',position:'',left:'',top:'',width:''});
+  const maxH=1030;
+  if(h>maxH)pa.style.zoom=(maxH/h).toFixed(3);
+}
+function printPassport(src){
+  preparePrint(src);
+  setTimeout(()=>window.print(),80);
+}
+window.addEventListener('beforeprint',()=>{if(!document.getElementById('printArea').innerHTML)preparePrint();});
+window.addEventListener('afterprint',()=>{document.getElementById('printArea').innerHTML='';});
 
 // ══════════════════════════════════════
 // Profile Form
 // ══════════════════════════════════════
 function populateForm(){
-  const{pet,allergies,conditions,medications,labs}=D;
+  const{pet}=D;
   const sv=(id,v)=>{const e=document.getElementById(id);if(e)e.value=v??'';};
   sv('f-name',pet.name);sv('f-breed',pet.breed);sv('f-color',pet.color);sv('f-sex',pet.sex);
   sv('f-dob',pet.dob);sv('f-weight',pet.weight);sv('f-chip',pet.microchip);sv('f-blood',pet.bloodType);
   sv('f-vet',pet.vet);sv('f-lastvisit',pet.lastVisit);sv('f-nextvisit',pet.nextVisit);sv('f-temp',pet.temp);
-  sv('f-labdt',labs.date);sv('f-alt',labs.alt??'');sv('f-bun',labs.bun??'');sv('f-cre',labs.cre??'');
-  sv('f-wbc',labs.wbc??'');sv('f-hgb',labs.hgb??'');sv('f-plt',labs.plt??'');
-  refreshAvatarUI();renderAlList();renderCondList();renderMedList();
+  refreshAvatarUI();renderAlList();renderCondList();renderMedList();renderLabList();
 }
 function renderAlList(){
   document.getElementById('al-list').innerHTML=D.allergies.map((a,i)=>`
-    <div class="flist-item"><span class="flist-text">${a.name} <span class="flist-sub">(${a.type})</span></span><button class="btn-rm" onclick="rmItem('allergies',${i})">×</button></div>`).join('');
+    <div class="flist-item"><span class="flist-text">${esc(a.name)} <span class="flist-sub">(${esc(a.type)})</span></span><button class="btn-rm" onclick="rmItem('allergies',${i})">×</button></div>`).join('');
 }
 function renderCondList(){
   document.getElementById('cond-list').innerHTML=D.conditions.map((c,i)=>`
-    <div class="flist-item"><span class="flist-text">${fmtDate(c.date)} · ${c.name} <span class="flist-sub">${c.status==='active'?'経過観察中':'治療完了'}</span></span><button class="btn-rm" onclick="rmItem('conditions',${i})">×</button></div>`).join('');
+    <div class="flist-item"><span class="flist-text">${fmtDate(c.date)} · ${esc(c.name)} <span class="flist-sub">${c.status==='active'?'経過観察中':'治療完了'}</span></span><button class="btn-rm" onclick="rmItem('conditions',${i})">×</button></div>`).join('');
 }
 function renderMedList(){
   document.getElementById('med-list').innerHTML=D.medications.map((m,i)=>`
-    <div class="flist-item"><span class="flist-text">${m.name} <span class="flist-sub">${m.dose} · ${m.frequency}</span></span><button class="btn-rm" onclick="rmItem('medications',${i})">×</button></div>`).join('');
+    <div class="flist-item"><span class="flist-text">${esc(m.name)} <span class="flist-sub">${esc(m.dose)} · ${esc(m.frequency)}</span></span><button class="btn-rm" onclick="rmItem('medications',${i})">×</button></div>`).join('');
+}
+function renderLabList(){
+  const list=sortedLabs().reverse();
+  document.getElementById('lab-list').innerHTML=list.length?list.map(e=>`
+    <div class="flist-item tap" onclick="editLab('${e.date}')">
+      <span class="flist-text"><b>${fmtDate(e.date)}</b><div class="lab-row-vals">${LAB_KEYS.filter(k=>e[k]!=null).map(k=>`${LAB_META[k].short} <b class="${labCls(k,e[k])}">${e[k]}</b>`).join(' · ')||'—'}</div></span>
+      <button class="btn-rm" onclick="event.stopPropagation();rmLab('${e.date}')">×</button>
+    </div>`).join(''):'<div style="font-size:12px;color:var(--t3)">まだ記録がありません</div>';
 }
 function rmItem(k,i){D[k].splice(i,1);saveData();
   if(k==='allergies')renderAlList();
@@ -865,6 +1596,25 @@ function rmItem(k,i){D[k].splice(i,1);saveData();
   if(k==='medications')renderMedList();
 }
 function toggleForm(id){document.getElementById(id).classList.toggle('open');}
+function setLabForm(e){
+  document.getElementById('f-labdt').value=e.date||todayStr();
+  LAB_KEYS.forEach(k=>document.getElementById('f-'+k).value=e[k]??'');
+}
+function openLabForm(){setLabForm({date:todayStr()});document.getElementById('lab-form').classList.add('open');}
+function editLab(date){const e=D.labHistory.find(x=>x.date===date);if(!e)return;setLabForm(e);document.getElementById('lab-form').classList.add('open');document.getElementById('lab-form').scrollIntoView({behavior:'smooth',block:'center'});}
+function rmLab(date){if(!confirm(`${fmtDate(date)} の検査結果を削除しますか？`))return;D.labHistory=D.labHistory.filter(e=>e.date!==date);saveData();renderLabList();}
+function addLabFromForm(){
+  const date=document.getElementById('f-labdt').value;
+  if(!date){showToast('検査日を入力してください');return;}
+  const e={date};let n=0;
+  LAB_KEYS.forEach(k=>{const v=parseFloat(document.getElementById('f-'+k).value);e[k]=isNaN(v)?null:v;if(!isNaN(v))n++;});
+  if(!n){showToast('検査値を1つ以上入力してください');return;}
+  const i=D.labHistory.findIndex(x=>x.date===date);
+  if(i>=0)D.labHistory[i]=e;else D.labHistory.push(e);   // フォームからは日付単位で上書き
+  D.labHistory.sort((a,b)=>a.date.localeCompare(b.date));
+  saveData();renderLabList();document.getElementById('lab-form').classList.remove('open');
+  showToast('検査結果を記録しました ✓');
+}
 function addAllergy(){
   const nm=document.getElementById('al-nm').value.trim();if(!nm)return;
   D.allergies.push({type:document.getElementById('al-type').value,name:nm});
@@ -887,10 +1637,10 @@ function saveProfile(){
   Object.assign(D.pet,{name:g('f-name'),breed:g('f-breed'),color:g('f-color'),sex:g('f-sex'),dob:g('f-dob'),
     weight:gn('f-weight')??D.pet.weight,microchip:g('f-chip'),bloodType:g('f-blood'),vet:g('f-vet'),
     lastVisit:g('f-lastvisit'),nextVisit:g('f-nextvisit'),temp:gn('f-temp')??D.pet.temp});
-  Object.assign(D.labs,{date:g('f-labdt'),alt:gn('f-alt'),bun:gn('f-bun'),cre:gn('f-cre'),wbc:gn('f-wbc'),hgb:gn('f-hgb'),plt:gn('f-plt')});
+  // 検査値フォームが開いていて入力があれば一緒に記録
+  if(document.getElementById('lab-form').classList.contains('open')&&LAB_KEYS.some(k=>g('f-'+k)!=='')){addLabFromForm();}
   saveData();
-  document.getElementById('chipName').textContent=D.pet.name;
-  renderDashboard();renderPassport();initCharts();
+  refreshAvatarUI();renderDashboard();renderPassport();
   showToast('保存しました ✓');
 }
 
@@ -1114,7 +1864,7 @@ function applyBillExtracted(){
   };
   D.checkups.unshift(checkup);
   if(!D.pet.lastVisit||dt>D.pet.lastVisit){D.pet.lastVisit=dt;if(vet)D.pet.vet=vet;}
-  saveData();renderDashboard();renderPassport();
+  saveData();renderDashboard();renderPassport();renderFeed();
   closeModal();showToast('受診記録を追加しました ✓');
 }
 
@@ -1240,22 +1990,36 @@ document.getElementById('docModal').addEventListener('click',e=>{
 
 function applyExtracted(){
   const gn=id=>{const v=parseFloat(document.getElementById(id).value);return isNaN(v)?null:v;};
-  const dt=document.getElementById('ex-dt').value;
-  if(dt)D.labs.date=dt;
+  const dt=document.getElementById('ex-dt').value||todayStr();
+  const e={date:dt};let n=0;
   const map={alt:'ex-alt',bun:'ex-bun',cre:'ex-cre',wbc:'ex-wbc',hgb:'ex-hgb',plt:'ex-plt'};
-  for(const[k,id]of Object.entries(map)){const v=gn(id);if(v!==null)D.labs[k]=v;}
+  for(const[k,id]of Object.entries(map)){e[k]=gn(id);if(e[k]!=null)n++;}
+  if(!n){showToast('検査値を1つ以上入力してください');return;}
+  upsertLab(e);
   saveData();renderPassport();renderDashboard();
-  closeModal();showToast('検査値をパスポートに反映しました ✓');
+  closeModal();showToast(`${fmtDate(dt)} の検査値を記録しました ✓`);
 }
 
 // ══════════════════════════════════════
 // Init
 // ══════════════════════════════════════
-refreshAvatarUI();
-renderDashboard();
-renderPassport();
-initCharts();
-renderDocs();
+document.getElementById('dailyModal').addEventListener('click',e=>{if(e.target.id==='dailyModal')closeDaily();});
+document.getElementById('qrModal').addEventListener('click',e=>{if(e.target.id==='qrModal')closeQr();});
+let _lastDay=todayStr();
+document.addEventListener('visibilitychange',()=>{
+  // 日付が変わっていたら年齢・残日数などを再計算
+  if(document.visibilityState==='visible'&&todayStr()!==_lastDay){_lastDay=todayStr();switchTab(curTab);}
+});
+(async()=>{
+  if(await initShared())return;
+  // 既存の写真からイラスト風アバターを生成（初回のみ）
+  if(D.pet.avatar&&!D.pet.avatarToon){D.pet.avatarToon=await makeToon(D.pet.avatar);saveData();}
+  refreshAvatarUI();
+  renderDashboard();
+  renderPassport();
+  renderDocs();
+  switchTab('timeline');
+})();
 </script>
 </body>
 </html>
